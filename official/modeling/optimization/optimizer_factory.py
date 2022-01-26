@@ -1,4 +1,4 @@
-# Copyright 2021 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2022 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ from typing import Callable, Optional, Union, List, Tuple
 import gin
 import tensorflow as tf
 import tensorflow_addons.optimizers as tfa_optimizers
-
 from official.modeling.optimization import slide_optimizer
 from official.modeling.optimization import adafactor_optimizer
 from official.modeling.optimization import ema_optimizer
@@ -29,6 +28,7 @@ from official.nlp import optimization as nlp_optimization
 
 OPTIMIZERS_CLS = {
     'sgd': tf.keras.optimizers.SGD,
+    'sgd_experimental': tf.keras.optimizers.experimental.SGD,
     'adam': tf.keras.optimizers.Adam,
     'adamw': nlp_optimization.AdamWeightDecay,
     'lamb': tfa_optimizers.LAMB,
@@ -178,7 +178,8 @@ class OptimizerFactory:
         takes an optimizer and returns an optimizer.
 
     Returns:
-      tf.keras.optimizers.Optimizer instance.
+      `tf.keras.optimizers.Optimizer` or
+      `tf.keras.optimizers.experimental.Optimizer` instance.
     """
 
     optimizer_dict = self._optimizer_config.as_dict()
@@ -201,8 +202,10 @@ class OptimizerFactory:
           optimizer, **self._ema_config.as_dict())
     if postprocessor:
       optimizer = postprocessor(optimizer)
-    assert isinstance(optimizer, tf.keras.optimizers.Optimizer), (
-        'OptimizerFactory.build_optimizer returning a non-optimizer object: '
+    assert isinstance(
+        optimizer, (tf.keras.optimizers.Optimizer,
+                    tf.keras.optimizers.experimental.Optimizer)
+    ), ('OptimizerFactory.build_optimizer returning a non-optimizer object: '
         '{}'.format(optimizer))
 
     return optimizer
